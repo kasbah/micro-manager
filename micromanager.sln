@@ -422,6 +422,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ChuoSeiki_QT", "DeviceAdapt
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Hamamatsu", "DeviceAdapters\Hamamatsu\Hamamatsu.vcxproj", "{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA07B1D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HiSeq2x00Camera", "DeviceAdapters\HiSeq2x00Camera\HiSeq2x00Camera.vcxproj", "{D48B92FE-C2C8-4B0B-B195-CDEA290D2750}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
