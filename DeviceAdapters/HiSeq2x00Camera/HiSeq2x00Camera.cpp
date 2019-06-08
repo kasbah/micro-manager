@@ -46,9 +46,68 @@ void CHiSeq2x00Camera::GetName(char* name) const
 	CDeviceUtils::CopyLimitedString(name, g_DeviceName);
 }
 
+inline const int my_dcamdev_string(DCAMERR& err, HDCAM hdcam, int32 idStr, char* text, int32 textbytes)
+{
+	DCAMDEV_STRING	param;
+	memset(&param, 0, sizeof(param));
+	param.size = sizeof(param);
+	param.text = text;
+	param.textbytes = textbytes;
+	param.iString = idStr;
+
+	err = dcamdev_getstring(hdcam, &param);
+	return !failed(err);
+}
+
+
+
 int CHiSeq2x00Camera::Initialize()
 {
-	return DEVICE_OK;
+	int ret = DEVICE_OK;
+	DCAMERR err;
+
+	DCAMAPI_INIT apiinit;
+	memset(&apiinit, 0, sizeof(apiinit));
+	apiinit.size = sizeof(apiinit);
+	err = dcamapi_init(&apiinit);
+
+	if (failed(err)) {
+		LogMessage("Error initializing dcamapi");
+		return DEVICE_ERR;
+	}
+
+	DCAMDEV_OPEN devopen;
+	memset(&devopen, 0, sizeof(devopen));
+	devopen.size = sizeof(devopen);
+	devopen.index = 0;
+	err = dcamdev_open(&devopen);
+
+	if (failed(err)) {
+		LogMessage("Error opening device");
+		return DEVICE_ERR;
+	}
+
+	hdcam_ = devopen.hdcam;
+
+	{
+		char model[256];
+		char cameraid[64];
+		char bus[64];
+		char msg[384] = "Hellooo from HiSeq2x00Camera: ";
+
+		DCAMERR	err;
+		my_dcamdev_string(err, hdcam_, DCAM_IDSTR_MODEL, model, sizeof(model));
+
+		if (failed(err))
+			LogMessage("Error obtaining model");
+		else {
+
+			LogMessage(strcat(msg, model));
+		}
+
+	}
+
+	return ret;
 }
 
 int CHiSeq2x00Camera::Shutdown()

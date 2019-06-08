@@ -34,6 +34,9 @@
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/ImgBuffer.h"
 
+#include "../../../3rdparty/Hamamatsu/DCAMSDK/201808/inc/dcamapi4.h"
+#include "../../../3rdparty/Hamamatsu/DCAMSDK/201808/inc/dcamprop.h"
+
 class CHiSeq2x00Camera : public CCameraBase<CHiSeq2x00Camera>
 {
 public:
@@ -95,6 +98,7 @@ public:
 private:
 	ImgBuffer img_;
 	long lnBin_;
+	HDCAM hdcam_;
 };
 
 
