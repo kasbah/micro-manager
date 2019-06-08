@@ -101,7 +101,6 @@ int CHiSeq2x00Camera::Initialize()
 		if (failed(err))
 			LogMessage("Error obtaining model");
 		else {
-
 			LogMessage(strcat(msg, model));
 		}
 
@@ -112,6 +111,10 @@ int CHiSeq2x00Camera::Initialize()
 
 int CHiSeq2x00Camera::Shutdown()
 {
+	DCAMERR err = dcamapi_uninit();
+	if (failed(err)) {
+		return DEVICE_ERR;
+	}
 	return DEVICE_OK;
 }
 
