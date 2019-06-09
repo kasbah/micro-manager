@@ -45,8 +45,53 @@ public:
 	void GetName(char* name) const;
 	bool Busy();
 
-	int SetPositionUm(double pos) { pos_um_ = pos; return DEVICE_OK; };
-	int GetPositionUm(double& pos) { pos = pos_um_; return DEVICE_OK; };
+	int SetPositionUm(double pos) { 
+		std::ostringstream command;
+		std::ostringstream command2;
+		std::string throw_away;
+		command << "1D" << int(pos * 100);
+		int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+		if (ret != DEVICE_OK) {
+			return ret;
+		}
+
+		ret = GetSerialAnswer(port_.c_str(), "\r\n", throw_away);
+		if (ret != DEVICE_OK) {
+			return ret;
+		}
+
+		command2 << "1G";
+		ret = SendSerialCommand(port_.c_str(), command2.str().c_str(), "\r");
+		if (ret != DEVICE_OK) {
+			return ret;
+		}
+		ret = GetSerialAnswer(port_.c_str(), "\r\n", throw_away);
+		if (ret != DEVICE_OK) {
+			return ret;
+		}		
+		return DEVICE_OK; 
+	
+	};
+	int GetPositionUm(double& pos) { 
+		std::ostringstream command;
+		std::string answer;
+		std::string throw_away;
+		command << "1D";
+		int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+		if (ret != DEVICE_OK) {
+			return ret;
+		}
+		ret = GetSerialAnswer(port_.c_str(), "\r\n", throw_away);
+		ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+
+		if (ret != DEVICE_OK) {
+			return ret;
+		}
+		
+		pos = atof(answer.erase(0, 1).c_str()) / 100;
+
+		return DEVICE_OK; 
+	};
 	int SetOrigin() { return DEVICE_OK; };
 	int GetLimits(double& min, double& max) { return DEVICE_OK; };
 	double GetStepSize() { return 0; }
