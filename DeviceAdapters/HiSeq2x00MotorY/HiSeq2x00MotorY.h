@@ -55,8 +55,13 @@ public:
 	int IsStageSequenceable(bool& isSequenceable) const { isSequenceable = false; return DEVICE_OK; }
 	bool IsContinuousFocusDrive(void) const { return false; };
 
+
+	int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+
 private:
 	double pos_um_;
+	std::string port_;
+	bool initialized_;
 
 };
 

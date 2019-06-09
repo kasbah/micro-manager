@@ -35,8 +35,13 @@ using namespace std;
 
 const char* g_DeviceName = "HiSeq2x00MotorY";
 
-CHiSeq2x00MotorY::CHiSeq2x00MotorY()
-{}
+CHiSeq2x00MotorY::CHiSeq2x00MotorY() :
+	port_("COM18"),
+	initialized_(false)
+{
+	CPropertyAction* pAct = new CPropertyAction(this, &CHiSeq2x00MotorY::OnPort);
+	CreateProperty(MM::g_Keyword_Port, "COM18", MM::String, false, pAct, true);
+}
 
 CHiSeq2x00MotorY::~CHiSeq2x00MotorY()
 {}
@@ -63,9 +68,26 @@ bool CHiSeq2x00MotorY::Busy(){
 }
 
 
+int CHiSeq2x00MotorY::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct) {
+	if (eAct == MM::BeforeGet) {
+		pProp->Set(port_.c_str());
+	}
+	else if (eAct == MM::AfterSet) {
+		if (initialized_)
+		{
+			// revert
+			pProp->Set(port_.c_str());
+			return DEVICE_ERR;
+		}
+
+		pProp->Get(port_);
+	}
+	return DEVICE_OK;
+}
+
 MODULE_API void InitializeModuleData()
 {
-	RegisterDevice(g_DeviceName, MM::CameraDevice, "HiSeq 2000 and 2500 Y motor adapter");
+	RegisterDevice(g_DeviceName, MM::StageDevice, "HiSeq 2000 and 2500 Y motor adapter");
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
