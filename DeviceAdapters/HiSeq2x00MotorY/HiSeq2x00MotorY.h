@@ -47,7 +47,6 @@ public:
 
 	int SetPositionUm(double pos) { 
 		std::ostringstream command;
-		std::ostringstream command2;
 		std::string throw_away;
 		command << "1D" << int(pos * 100);
 		int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
@@ -60,8 +59,8 @@ public:
 			return ret;
 		}
 
-		command2 << "1G";
-		ret = SendSerialCommand(port_.c_str(), command2.str().c_str(), "\r");
+
+		ret = SendSerialCommand(port_.c_str(), "1G", "\r");
 		if (ret != DEVICE_OK) {
 			return ret;
 		}
@@ -73,11 +72,10 @@ public:
 	
 	};
 	int GetPositionUm(double& pos) { 
-		std::ostringstream command;
 		std::string answer;
 		std::string throw_away;
-		command << "1D";
-		int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+		
+		int ret = SendSerialCommand(port_.c_str(), "1D", "\r");
 		if (ret != DEVICE_OK) {
 			return ret;
 		}
@@ -88,6 +86,7 @@ public:
 			return ret;
 		}
 		
+		// answer is in the form: "*-3000" so we ignore the "*" and convert to float
 		pos = atof(answer.erase(0, 1).c_str()) / 100;
 
 		return DEVICE_OK; 
