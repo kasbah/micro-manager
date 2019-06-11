@@ -56,7 +56,7 @@ public:
 	unsigned GetImageHeight() const { return img_.Height(); }
 	unsigned GetImageBytesPerPixel() const { return img_.Depth(); }
 	long GetImageBufferSize() const { return img_.Width() * img_.Height() * GetImageBytesPerPixel(); }
-	unsigned GetBitDepth() const { return 0; };
+	unsigned GetBitDepth() const { return 16; };
 	double GetExposure() const { return 0; };
 	void SetExposure(double dExp) {};
 	int SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSize) {
@@ -68,12 +68,9 @@ public:
 	int ClearROI() {
 		return DEVICE_OK;
 	};
-	int GetBinning() const { return lnBin_; };
-	int SetBinning(int binSize) {
-		return DEVICE_OK;
-	};
-
-
+	int GetBinning() const { return 1; };
+	int SetBinning(int binSize);
+	
 	// high-speed interface
 	int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow) {
 		return DEVICE_OK;
@@ -85,7 +82,7 @@ public:
 		return DEVICE_OK;
 	};
 	bool IsCapturing() {
-		return false ;
+		return busy_;
 	};
 	int RestartSnapMode() {
 		return DEVICE_OK;
@@ -97,8 +94,9 @@ public:
 	int PushImage();
 private:
 	ImgBuffer img_;
-	long lnBin_;
 	HDCAM hdcam_;
+	HDCAMWAIT hwait_;
+	bool busy_;
 };
 
 

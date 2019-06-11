@@ -35,8 +35,10 @@ using namespace std;
 
 const char* g_DeviceName = "HiSeq2x00Camera";
 
-CHiSeq2x00Camera::CHiSeq2x00Camera()
-{}
+CHiSeq2x00Camera::CHiSeq2x00Camera() : busy_(false)
+{
+	img_.Resize(4096, 4000, 2);
+}
 
 CHiSeq2x00Camera::~CHiSeq2x00Camera()
 {}
@@ -105,12 +107,40 @@ int CHiSeq2x00Camera::Initialize()
 		}
 
 	}
+	DCAMERR e;
+	e = dcamprop_setvalue(hdcam_, DCAM_IDPROP_TRIGGERSOURCE, DCAMPROP_TRIGGERSOURCE__EXTERNAL);
+	if (failed(e)) {
+		LogMessage("Error setting trigger source");
+		char x[64];
+		sprintf(x, "DCAMERR: 0x%08X", e);
+		LogMessage(x);
+		return DEVICE_ERR;
+	}
 
+	e = dcamprop_setvalue(hdcam_, DCAM_IDPROP_SENSORMODE_LINEBUNDLEHEIGHT, 4000);
+	if (failed(e)) {
+		LogMessage("Error setting line bundle height");
+		char x[64];
+		sprintf(x, "DCAMERR: 0x%08X", e);
+		LogMessage(x);
+		return DEVICE_ERR;
+	}
+
+	img_.Resize(4096, 4000, 2);
+
+	LogMessage("init done");
 	return ret;
 }
 
+int CHiSeq2x00Camera::SetBinning(int binSize)
+{
+	ostringstream os;
+	os << binSize;
+	return SetProperty(MM::g_Keyword_Binning, os.str().c_str());
+}
 int CHiSeq2x00Camera::Shutdown()
 {
+	dcamdev_close(hdcam_);
 	DCAMERR err = dcamapi_uninit();
 	if (failed(err)) {
 		return DEVICE_ERR;
@@ -120,20 +150,242 @@ int CHiSeq2x00Camera::Shutdown()
 
 
 bool CHiSeq2x00Camera::Busy(){
-	return false;
+	return busy_;
+}
+
+void dcamcon_show_dcamerr(HDCAM hdcam, DCAMERR errid, const char* apiname, const char* fmt, ...)
+{
+	char errtext[256];
+
+	DCAMERR err;
+	my_dcamdev_string(err, hdcam, errid, errtext, sizeof(errtext));
+
+	printf("FAILED: (DCAMERR)0x%08X %s @ %s", errid, errtext, apiname);
+
+	if (fmt != NULL)
+	{
+		printf(" : ");
+
+		va_list	arg;
+		va_start(arg, fmt);
+		vprintf(fmt, arg);
+		va_end(arg);
+	}
+
+	printf("\n");
+}
+/**
+ @brief	get image information from properties.
+ @param	hdcam:		DCAM handle
+ @param pixeltype:	DCAM_PIXELTYPE value
+ @param width:		image width
+ @param rowbytes:	image rowbytes
+ @param height:		image height
+ */
+void get_image_information(HDCAM hdcam, int32& pixeltype, int32& width, int32& rowbytes, int32& height)
+{
+	DCAMERR err;
+
+	double v;
+
+	// image pixel type(DCAM_PIXELTYPE_MONO16, MONO8, ... )
+	err = dcamprop_getvalue(hdcam, DCAM_IDPROP_IMAGE_PIXELTYPE, &v);
+	if (failed(err))
+	{
+		dcamcon_show_dcamerr(hdcam, err, "dcamprop_getvalue()", "IDPROP:IMAGE_PIXELTYPE");
+		return;
+	}
+	else
+		pixeltype = (int32)v;
+
+	// image width
+	err = dcamprop_getvalue(hdcam, DCAM_IDPROP_IMAGE_WIDTH, &v);
+	if (failed(err))
+	{
+		dcamcon_show_dcamerr(hdcam, err, "dcamprop_getvalue()", "IDPROP:IMAGE_WIDTH");
+		return;
+	}
+	else
+		width = (int32)v;
+
+	// image row bytes
+	err = dcamprop_getvalue(hdcam, DCAM_IDPROP_IMAGE_ROWBYTES, &v);
+	if (failed(err))
+	{
+		dcamcon_show_dcamerr(hdcam, err, "dcamprop_getvalue()", "IDPROP:IMAGE_ROWBYTES");
+		return;
+	}
+	else
+		rowbytes = (int32)v;
+
+	// image height
+	err = dcamprop_getvalue(hdcam, DCAM_IDPROP_IMAGE_HEIGHT, &v);
+	if (failed(err))
+	{
+		dcamcon_show_dcamerr(hdcam, err, "dcamprop_getvalue()", "IDPROP:IMAGE_HEIGHT");
+		return;
+	}
+	else
+		height = (int32)v;
 }
 
 
 int CHiSeq2x00Camera::SnapImage()
 {
+	LogMessage("SnapImage");
+	busy_ = true;
+	// open wait handle
+	DCAMWAIT_OPEN	waitopen;
+	memset(&waitopen, 0, sizeof(waitopen));
+	waitopen.size = sizeof(waitopen);
+	waitopen.hdcam = hdcam_;
+
+	DCAMERR err = dcamwait_open(&waitopen);
+	
+	hwait_ = waitopen.hwait;
+
+	LogMessage("Allocate");
+	int32 number_of_buffer = 10;
+	err = dcambuf_alloc(hdcam_, number_of_buffer);
+	err = dcamcap_start(hdcam_, DCAMCAP_START_SEQUENCE);
+	LogMessage("Allocate done");
+	// set wait param
+	DCAMWAIT_START waitstart;
+	memset(&waitstart, 0, sizeof(waitstart));
+	waitstart.size = sizeof(waitstart);
+	waitstart.eventmask = DCAMWAIT_CAPEVENT_FRAMEREADY;
+	waitstart.timeout = 30000;
+
+	//dcamcap_firetrigger(hdcam_, 0);
+	LogMessage("wait_start");
+	err = dcamwait_start(hwait_, &waitstart);
+	if (failed(err)) {
+		LogMessage("Error during wait_start");
+		char x[64];
+		sprintf(x, "DCAMERR: 0x%08X", err);
+		LogMessage(x);
+		return DEVICE_ERR;
+	}
+	dcamcap_stop(hdcam_);
+
+	
+	LogMessage("SnapImage done");
 	return DEVICE_OK;
 }
 
+BOOL copy_targetarea(HDCAM hdcam, int32 iFrame, void* buf, int32 rowbytes, int32 ox, int32 oy, int32 cx, int32 cy)
+{
+	DCAMERR err;
 
+	// prepare frame param
+	DCAMBUF_FRAME bufframe;
+	memset(&bufframe, 0, sizeof(bufframe));
+	bufframe.size = sizeof(bufframe);
+	bufframe.iFrame = iFrame;
+
+#if USE_COPYFRAME
+	// set user buffer information and copied ROI
+	bufframe.buf = buf;
+	bufframe.rowbytes = rowbytes;
+	bufframe.left = ox;
+	bufframe.top = oy;
+	bufframe.width = cx;
+	bufframe.height = cy;
+
+	// access image
+	err = dcambuf_copyframe(hdcam, &bufframe);
+	if (failed(err))
+	{
+		dcamcon_show_dcamerr(hdcam, err, "dcambuf_copyframe()");
+		return FALSE;
+	}
+#else
+	// access image
+	err = dcambuf_lockframe(hdcam, &bufframe);
+	if (failed(err))
+	{
+		//dcamcon_show_dcamerr(hdcam, err, "dcambuf_lockframe()");
+		return FALSE;
+	}
+
+	if (bufframe.type != DCAM_PIXELTYPE_MONO16)
+	{
+		printf("not implement pixel type\n");
+		return FALSE;
+	}
+
+	// copy target ROI
+	int32 copyrowbytes = cx * 2;
+	char* pSrc = (char*)bufframe.buf + oy * bufframe.rowbytes + ox * 2;
+	char* pDst = (char*)buf;
+
+	int y;
+	for (y = 0; y < cy; y++)
+	{
+		memcpy_s(pDst, rowbytes, pSrc, copyrowbytes);
+
+		pSrc += bufframe.rowbytes;
+		pDst += rowbytes;
+	}
+#endif
+
+	return TRUE;
+}
 const unsigned char* CHiSeq2x00Camera::GetImageBuffer()
 {
+	LogMessage("GetImageBuffer");
+ 	DCAMERR err;
 
-	return (unsigned char*)0;
+	// transferinfo param
+	DCAMCAP_TRANSFERINFO captransferinfo;
+	memset(&captransferinfo, 0, sizeof(captransferinfo));
+	captransferinfo.size = sizeof(captransferinfo);
+
+	// get number of captured image
+	err = dcamcap_transferinfo(hdcam_, &captransferinfo);
+
+	// get image information
+	int32 pixeltype = 0, width = 0, rowbytes = 0, height = 0;
+	get_image_information(hdcam_, pixeltype, width, rowbytes, height);
+
+	char x[128];
+	sprintf(x, "pixelType:%i, width:%i, height:%i, rowbytes:%i, nframes:%i", pixeltype, width, height, rowbytes, captransferinfo.nFrameCount);
+	LogMessage(x);
+
+	int32 cx = width;
+	int32 cy = height;
+	
+	unsigned char* src = new unsigned char[cx * 2 * cy];
+	memset(src, 0, cx * 2 * cy);
+
+	
+
+	//// prepare frame param
+	//DCAMBUF_FRAME bufframe;
+	//memset(&bufframe, 0, sizeof(bufframe));
+	//bufframe.size = sizeof(bufframe);
+	//bufframe.iFrame = 0;
+	//bufframe.buf = src;
+	//bufframe.rowbytes = rowbytes;
+	//bufframe.left = 0;
+	//bufframe.top = 0;
+	//bufframe.width = cx;
+	//bufframe.height = cy;
+
+	//// access image
+	//err = dcambuf_copyframe(hdcam_, &bufframe);
+
+	copy_targetarea(hdcam_, 0, src, rowbytes, 0, 0, width, height);
+
+		
+	//img_.SetPixels(src);
+
+
+	dcambuf_release(hdcam_);
+	dcamwait_close(hwait_);
+	busy_ = false;
+	LogMessage("GetImageBuffer done");
+	return src;
 }
 
 MODULE_API void InitializeModuleData()
