@@ -36,11 +36,23 @@ using namespace std;
 const char* g_DeviceName = "HiSeq2x00StageZ";
 
 CHiSeq2x00StageZ::CHiSeq2x00StageZ() :
-	port_("COM18"),
-	initialized_(false)
+	port_write_("COM16"),
+	port_read_("COM15"),
+	initialized_(false),
+	pos_um_(0)
 {
-	CPropertyAction* pAct = new CPropertyAction(this, &CHiSeq2x00StageZ::OnPort);
-	CreateProperty(MM::g_Keyword_Port, "COM18", MM::String, false, pAct, true);
+	//CPropertyAction* pActRead = new CPropertyAction(this, &CHiSeq2x00StageZ::OnPortRead);
+	//CreateProperty("Port", "COM15", MM::String, false, pActRead, true);
+
+	//CPropertyAction* pActReadBaud = new CPropertyAction(this, &CHiSeq2x00StageZ::OnPortReadBaud);
+	//CreateProperty("Response Port", "115200", MM::String, false, pActRead, true);
+
+	CPropertyAction* pActWrite = new CPropertyAction(this, &CHiSeq2x00StageZ::OnPortWrite);
+	CreateProperty("Port", "COM16", MM::String, false, pActWrite, true);
+
+
+	//CPropertyAction* pActWriteBaud = new CPropertyAction(this, &CHiSeq2x00StageZ::OnPortWriteBaud);
+	//CreateProperty("Command Port", "115200", MM::String, false, pActWrite, true);
 }
 
 CHiSeq2x00StageZ::~CHiSeq2x00StageZ()
@@ -54,7 +66,19 @@ void CHiSeq2x00StageZ::GetName(char* name) const
 int CHiSeq2x00StageZ::Initialize()
 {
 	int ret = DEVICE_OK;
-	return ret;
+	LogMessage("Initialize");
+	ret = GetCoreCallback()->SetSerialProperties(port_write_.c_str(), "500.0", "115200", "0.0", "Off", "None", "1");
+	if (ret != 0)
+	{
+		return MM::CanNotCommunicate;
+	}
+	SetPositionUm(3000);
+	/*ret = GetCoreCallback()->SetSerialProperties(port_read_.c_str(), "500.0", "115200", "0.0", "Off", "None", "1");
+	if (ret != 0)
+	{
+		return MM::CanNotCommunicate;
+	}*/
+	return DEVICE_OK;
 }
 
 int CHiSeq2x00StageZ::Shutdown()
@@ -68,22 +92,41 @@ bool CHiSeq2x00StageZ::Busy(){
 }
 
 
-int CHiSeq2x00StageZ::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct) {
+int CHiSeq2x00StageZ::OnPortRead(MM::PropertyBase* pProp, MM::ActionType eAct) {
 	if (eAct == MM::BeforeGet) {
-		pProp->Set(port_.c_str());
+		pProp->Set(port_read_.c_str());
 	}
 	else if (eAct == MM::AfterSet) {
 		if (initialized_)
 		{
 			// revert
-			pProp->Set(port_.c_str());
+			pProp->Set(port_read_.c_str());
 			return DEVICE_ERR;
 		}
 
-		pProp->Get(port_);
+		pProp->Get(port_read_);
 	}
 	return DEVICE_OK;
 }
+
+int CHiSeq2x00StageZ::OnPortWrite(MM::PropertyBase* pProp, MM::ActionType eAct) {
+	if (eAct == MM::BeforeGet) {
+		pProp->Set(port_write_.c_str());
+	}
+	else if (eAct == MM::AfterSet) {
+		if (initialized_)
+		{
+			// revert
+			pProp->Set(port_write_.c_str());
+			return DEVICE_ERR;
+		}
+
+		pProp->Get(port_write_);
+	}
+	return DEVICE_OK;
+}
+
+
 
 MODULE_API void InitializeModuleData()
 {

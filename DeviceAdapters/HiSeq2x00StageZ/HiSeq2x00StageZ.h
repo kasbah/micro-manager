@@ -48,26 +48,16 @@ public:
 	int SetPositionUm(double pos) {
 		std::ostringstream command;
 		std::string throw_away;
-		command << "1D" << int(pos * 100);
-		int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+		command << "ZDACW " << int(pos);
+		
+		LogMessage("SetPositionUm");
+		LogMessage(port_write_);
+		LogMessage(port_read_);
+		int ret = SendSerialCommand(port_write_.c_str(), command.str().c_str(), "\r");
 		if (ret != DEVICE_OK) {
 			return ret;
 		}
-
-		ret = GetSerialAnswer(port_.c_str(), "\r\n", throw_away);
-		if (ret != DEVICE_OK) {
-			return ret;
-		}
-
-
-		ret = SendSerialCommand(port_.c_str(), "1G", "\r");
-		if (ret != DEVICE_OK) {
-			return ret;
-		}
-		ret = GetSerialAnswer(port_.c_str(), "\r\n", throw_away);
-		if (ret != DEVICE_OK) {
-			return ret;
-		}
+		pos_um_ = pos;
 		return DEVICE_OK;
 
 	};
@@ -75,20 +65,26 @@ public:
 		std::string answer;
 		std::string throw_away;
 
-		int ret = SendSerialCommand(port_.c_str(), "1D", "\r");
-		if (ret != DEVICE_OK) {
-			return ret;
-		}
-		ret = GetSerialAnswer(port_.c_str(), "\r\n", throw_away);
-		ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+		LogMessage("GetPositionUm");
+		//LogMessage(port_write_);
+		//LogMessage(port_read_);
 
-		if (ret != DEVICE_OK) {
-			return ret;
-		}
+		//int ret = SendSerialCommand(port_write_.c_str(), "ZDACR", "\r");
+		//char x[100];
+		//snprintf(x, 10, "ret: %i", ret);
+		//if (ret != DEVICE_OK) {
+		//	LogMessage(x);
+		//	return ret;
+		//}
+		//ret = GetSerialAnswer(port_read_.c_str(), "\r", answer);
+		//
+		//if (ret != DEVICE_OK) {
+		//	return ret;
+		//}
 
-		// answer is in the form: "*-3000" so we ignore the "*" and convert to float
-		pos = atof(answer.erase(0, 1).c_str()) / 100;
-
+		// answer is in the form: "ZDACR 3000" so we ignore the "ZDACR " and convert to float
+		//pos = atof(answer.erase(0, 6).c_str());
+		pos = pos_um_;
 		return DEVICE_OK;
 	};
 	int SetOrigin() { return DEVICE_OK; };
@@ -100,11 +96,14 @@ public:
 	bool IsContinuousFocusDrive(void) const { return false; };
 
 
-	int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnPortRead(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnPortWrite(MM::PropertyBase* pProp, MM::ActionType eAct);
+
 
 private:
 	double pos_um_;
-	std::string port_;
+	std::string port_read_;
+	std::string port_write_;
 	bool initialized_;
 
 };
