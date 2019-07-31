@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// FILE:          ASIStage.h
+// FILE:          HiSeq2x00Stage.h
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
@@ -24,8 +24,8 @@
 // AUTHOR:        Jizhen Zhao (j.zhao@andor.com) based on code by Nenad Amodaj, April 2007, modified by Nico Stuurman, 12/2007
 //
 
-#ifndef _ASIStage_H_
-#define _ASIStage_H_
+#ifndef _HiSeq2x00Stage_H_
+#define _HiSeq2x00Stage_H_
 
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
@@ -162,7 +162,7 @@ private:
    int OnVectorGeneric (MM::PropertyBase* pProp, MM::ActionType eAct, std::string axisLetter);
    int OnVectorX (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnVectorGeneric(pProp, eAct, axisletterX_); }
    int OnVectorY (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnVectorGeneric(pProp, eAct, axisletterY_); }
-	
+
 
    double stepSizeXUm_;
    double stepSizeYUm_;
@@ -181,7 +181,7 @@ private:
    unsigned int compileDay_;  // "days" since Jan 1 2000 since the firmware was compiled according to (compile day + 31*(compile month-1) + 12*31*(compile year-2000))
    bool advancedPropsEnabled_;
    std::string axisletterX_;
-   std::string axisletterY_;	
+   std::string axisletterY_;
 };
 
 class ZStage : public CStageBase<ZStage>, public ASIBase
@@ -481,4 +481,4 @@ private:
 
 
 
-#endif //_ASIStage_H_
+#endif //_HiSeq2x00Stage_H_

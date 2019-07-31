@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// FILE:          ASIStage.cpp
+// FILE:          HiSeq2x00Stage.cpp
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
@@ -33,7 +33,7 @@
 #pragma warning(disable: 4355)
 #endif
 
-#include "ASIStage.h"
+#include "Hiseq2x00Stage.h"
 #include <cstdio>
 #include <string>
 #include <math.h>
@@ -393,7 +393,7 @@ XYStage::XYStage() :
    manualSerialAnswer_(""),
    compileDay_(0),
    advancedPropsEnabled_(false),
-   axisletterX_("X"), //paving the way for future 
+   axisletterX_("X"), //paving the way for future
    axisletterY_("Y")
 {
    InitializeDefaultErrorMessages();
@@ -474,7 +474,7 @@ int XYStage::Initialize()
       UpdateProperty("BuildName");
    }
 
-   // Most ASIStages have the origin in the top right corner, the following reverses direction of the X-axis:
+   // Most HiSeq2x00Stages have the origin in the top right corner, the following reverses direction of the X-axis:
    ret = SetAxisDirection();
    if (ret != DEVICE_OK)
       return ret;
@@ -606,7 +606,7 @@ int XYStage::Initialize()
 	   }else{
 	   mspeed=atof(orig_speed);
 	   }
-		
+
 	   pAct = new CPropertyAction (this, &XYStage::OnVectorX);
 	   CreateProperty("VectorMoveX-VE(mm/s)", "0", MM::Float, false, pAct);
   	   SetPropertyLimits("VectorMoveX-VE(mm/s)", mspeed*-1, mspeed);
@@ -2058,7 +2058,7 @@ int XYStage::GetPositionStepsSingle(char /*axis*/, long& /*steps*/)
 
 int XYStage::SetAxisDirection()
 {
-   
+
    ostringstream command;
    command << "UM "<<axisletterX_<<"=-10000 "<<axisletterY_<<"=10000";
    string answer = "";
@@ -2076,10 +2076,10 @@ int XYStage::SetAxisDirection()
    }
 
    return ERR_UNRECOGNIZED_ANSWER;
-   
+
 	/*
 	//ASI XY Stage positive limit is top-right, however micromanager convention is top-left
-	//so we reverse X axis direction 
+	//so we reverse X axis direction
 
 	XYStage::SetProperty(MM::g_Keyword_Transpose_MirrorX,"1" );
 	XYStage::SetProperty(MM::g_Keyword_Transpose_MirrorY,"0" );
@@ -2189,8 +2189,8 @@ string XYStage::UnescapeControlCharacters(const string v0)
 int XYStage::OnVectorGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, std::string axisLetter){
 	if (eAct == MM::BeforeGet)
    {
-     
-     
+
+
 	   ostringstream command;
       command << "VE " + axisLetter + "?";
       string answer;
@@ -2213,12 +2213,12 @@ int XYStage::OnVectorGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, std::
          return ERR_OFFSET + errNo;
       }
       return ERR_UNRECOGNIZED_ANSWER;
-	 
+
    }
    else if (eAct == MM::AfterSet) {
       double vector;
       pProp->Get(vector);
-      
+
       ostringstream command;
       command << "VE " << axisLetter << "=" << vector;
       string answer;
@@ -2439,7 +2439,7 @@ int ZStage::Initialize()
    }else{
    mspeed=atof(orig_speed);
    }
-     
+
    SetPropertyLimits("VectorMove-VE(mm/s)", mspeed*-1, mspeed);
    UpdateProperty("VectorMove-VE(mm/s)");
    }
@@ -3582,7 +3582,7 @@ int ZStage::OnVector(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::BeforeGet)
    {
       // To simplify our life we only read out acceleration for the X axis, but set for both
-     
+
 	   ostringstream command;
       command << "VE " + axis_ + "?";
       string answer;
@@ -3609,7 +3609,7 @@ int ZStage::OnVector(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet) {
       double vector;
       pProp->Get(vector);
-      
+
       ostringstream command;
       command << "VE " << axis_ << "=" << vector;
       string answer;
@@ -5507,7 +5507,7 @@ LED::LED() :
    {
    InitializeDefaultErrorMessages();
 
-   
+
 
    // create pre-initialization properties
    // ------------------------------------
@@ -5521,7 +5521,7 @@ LED::LED() :
    // Port
    CPropertyAction* pAct = new CPropertyAction (this, &LED::OnPort);
    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
-   
+
    // MS2000 supports multiple channels now
    pAct = new CPropertyAction(this, &LED::OnChannel);
    CreateProperty("Channel", "0", MM::Integer, false, pAct, true);
@@ -5530,7 +5530,7 @@ LED::LED() :
    AddAllowedValue("Channel", "2");
    AddAllowedValue("Channel", "3");
 
-   
+
 
 }
 
@@ -5626,7 +5626,7 @@ int LED::SetOpen (bool open)
    ClearPort();
 
    ostringstream command;
-   
+
    if ((!hasDLED_) & (channel_ == 0)) {
 	   //On Old Regulator LED , we turn the TTL mode itself on and off to reduce flicker
 	   if (open)
@@ -5643,7 +5643,7 @@ int LED::SetOpen (bool open)
 
    }
    else {
-	//If DLED or other full on and off LEDs , use LED command 
+	//If DLED or other full on and off LEDs , use LED command
 
 
 	   if (open) {
@@ -5701,7 +5701,7 @@ int LED::IsOpen(bool *open)
    if ((!hasDLED_) & (channel_ == 0)) {
 
 	   command << "TTL Y?";
-	   
+
 
 	   string answer;
 	   // query the device
@@ -5709,9 +5709,9 @@ int LED::IsOpen(bool *open)
 	   if (ret != DEVICE_OK)
 		   return ret;
 
-	   
+
 	   if ((answer.substr(0, 2).compare(":A") == 0) || (answer.substr(1, 2).compare(":A") == 0)) {
-		   
+
 		   if (answer.substr(2, 1) == "0")
 			   *open = false;
 	   }
@@ -5724,9 +5724,9 @@ int LED::IsOpen(bool *open)
 
    }
    else {
-	   //Query the LED command 
+	   //Query the LED command
 	   command << "LED " << channelAxisChar_ << "?";
-	   
+
 
 	   string answer;
 	   // query the device
@@ -5734,11 +5734,11 @@ int LED::IsOpen(bool *open)
 	   if (ret != DEVICE_OK)
 		   return ret;
 
-	   
+
 	   // Command "LED X?" return "X=0 :A"
-	   
+
 	   if (answer.substr(0, 1)[0]==channelAxisChar_) {
-		  
+
 		   if (answer.substr(2, 1) == "0")
 			   *open = false;
 	   }
@@ -5913,7 +5913,7 @@ int LED::OnChannel(MM::PropertyBase * pProp, MM::ActionType eAct)
 			channelAxisChar_ = 'X';
 			break;
 		}
-	
+
 
 	}
 
