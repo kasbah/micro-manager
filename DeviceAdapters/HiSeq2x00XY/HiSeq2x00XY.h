@@ -3,7 +3,7 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Illumina HiSeq 2000 and 2500 Y motor stage adapter
+// DESCRIPTION:   Illumina HiSeq 2000 and 2500 X and Y motor stage adapter
 // COPYRIGHT:     Kaspar Emanuel 2019
 //
 //

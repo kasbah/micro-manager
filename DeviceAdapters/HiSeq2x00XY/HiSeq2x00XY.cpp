@@ -3,7 +3,7 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Illumina HiSeq 2000 and 2500 Y motor stage adapter
+// DESCRIPTION:   Illumina HiSeq 2000 and 2500 X and Y motor stage adapter
 // COPYRIGHT:     Kaspar Emanuel 2019
 //
 //
@@ -107,7 +107,7 @@ int CHiSeq2x00XY::OnPort2(MM::PropertyBase* pProp, MM::ActionType eAct) {
 
 MODULE_API void InitializeModuleData()
 {
-	RegisterDevice(g_DeviceName, MM::StageDevice, "HiSeq 2000 and 2500 Y motor adapter");
+	RegisterDevice(g_DeviceName, MM::StageDevice, "HiSeq 2000 and 2500 X and Y motor adapter");
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
