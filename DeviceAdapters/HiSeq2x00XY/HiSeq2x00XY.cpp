@@ -107,7 +107,7 @@ int CHiSeq2x00XY::OnPort2(MM::PropertyBase* pProp, MM::ActionType eAct) {
 
 MODULE_API void InitializeModuleData()
 {
-	RegisterDevice(g_DeviceName, MM::StageDevice, "HiSeq 2000 and 2500 X and Y motor adapter");
+	RegisterDevice(g_DeviceName, MM::XYStageDevice, "HiSeq 2000 and 2500 X and Y motor adapter");
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)

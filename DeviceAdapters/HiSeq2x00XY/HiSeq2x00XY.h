@@ -33,7 +33,9 @@
 
 #include "../../MMDevice/DeviceBase.h"
 
-class CHiSeq2x00XY : public CStageBase<CHiSeq2x00XY>
+
+
+class CHiSeq2x00XY : public CXYStageBase<CHiSeq2x00XY>
 {
 public:
 	CHiSeq2x00XY();
@@ -45,10 +47,10 @@ public:
 	void GetName(char* name) const;
 	bool Busy();
 
-	int SetPositionUm(double pos) { 
+	int SetPositionUm(double x, double y) { 
 		std::ostringstream command;
 		std::string throw_away;
-		command << "1D" << int(pos * 100);
+		command << "1D" << int(y * 100);
 		int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
 		if (ret != DEVICE_OK) {
 			return ret;
@@ -71,33 +73,71 @@ public:
 		return DEVICE_OK; 
 	
 	};
-	int GetPositionUm(double& pos) { 
-		std::string answer;
-		std::string throw_away;
-		
-		int ret = SendSerialCommand(port_.c_str(), "1D", "\r");
-		if (ret != DEVICE_OK) {
-			return ret;
-		}
-		ret = GetSerialAnswer(port_.c_str(), "\r\n", throw_away);
-		ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+	//int GetPositionUm(double& pos) { 
+	//	std::string answer;
+	//	std::string throw_away;
+	//	
+	//	int ret = SendSerialCommand(port_.c_str(), "1D", "\r");
+	//	if (ret != DEVICE_OK) {
+	//		return ret;
+	//	}
+	//	ret = GetSerialAnswer(port_.c_str(), "\r\n", throw_away);
+	//	ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
 
-		if (ret != DEVICE_OK) {
-			return ret;
-		}
-		
-		// answer is in the form: "*-3000" so we ignore the "*" and convert to float
-		pos = atof(answer.erase(0, 1).c_str()) / 100;
+	//	if (ret != DEVICE_OK) {
+	//		return ret;
+	//	}
+	//	
+	//	// answer is in the form: "*-3000" so we ignore the "*" and convert to float
+	//	pos = atof(answer.erase(0, 1).c_str()) / 100;
 
-		return DEVICE_OK; 
-	};
-	int SetOrigin() { return DEVICE_OK; };
-	int GetLimits(double& min, double& max) { return DEVICE_OK; };
-	double GetStepSize() { return 0; }
-	int SetPositionSteps(long steps) { return DEVICE_OK; };
-	int GetPositionSteps(long& steps) { return DEVICE_OK; };
-	int IsStageSequenceable(bool& isSequenceable) const { isSequenceable = false; return DEVICE_OK; }
-	bool IsContinuousFocusDrive(void) const { return false; };
+	//	return DEVICE_OK; 
+	//};
+	//int SetOrigin() { return DEVICE_OK; };
+	//int GetLimits(double& min, double& max) { return DEVICE_OK; };
+	//double GetStepSize() { return 0; }
+	//int SetPositionSteps(long steps) { return DEVICE_OK; };
+	//int GetPositionSteps(long& steps) { return DEVICE_OK; };
+	//int IsStageSequenceable(bool& isSequenceable) const { isSequenceable = false; return DEVICE_OK; }
+	//bool IsContinuousFocusDrive(void) const { return false; };
+
+	// XYStage API
+// -----------
+	int SetPositionSteps(long x, long y)
+	{
+		return DEVICE_OK;
+	}
+	//int SetRelativePositionSteps(long x, long y)
+	//{
+	//	return DEVICE_OK;
+	//}
+	int GetPositionSteps(long& x, long& y)
+	{
+		return DEVICE_OK;
+	}
+	int Home()
+	{
+		return DEVICE_OK;
+	}
+	int Stop()
+	{
+		return DEVICE_OK;
+	}
+	int SetOrigin()
+	{
+		return DEVICE_OK;
+	}
+	int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax)
+	{
+		return DEVICE_UNSUPPORTED_COMMAND;
+	}
+	int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax)
+	{
+		return DEVICE_UNSUPPORTED_COMMAND;
+	}
+	double GetStepSizeXUm() { return stepSizeXUm_; }
+	double GetStepSizeYUm() { return stepSizeYUm_; }
+	int IsXYStageSequenceable(bool& isSequenceable) const { isSequenceable = false; return DEVICE_OK; }
 
 
 	int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -108,6 +148,8 @@ private:
 	std::string port_;
 	std::string port2_;
 	bool initialized_;
+	double stepSizeXUm_;
+	double stepSizeYUm_;
 
 };
 
