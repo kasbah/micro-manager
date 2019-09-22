@@ -37,10 +37,13 @@ const char* g_DeviceName = "HiSeq2x00XY";
 
 CHiSeq2x00XY::CHiSeq2x00XY() :
 	port_("COM18"),
+	port2_("COM19"),
 	initialized_(false)
 {
 	CPropertyAction* pAct = new CPropertyAction(this, &CHiSeq2x00XY::OnPort);
 	CreateProperty(MM::g_Keyword_Port, "COM18", MM::String, false, pAct, true);
+	pAct = new CPropertyAction(this, &CHiSeq2x00XY::OnPort2);
+	CreateProperty("Port2", "COM19", MM::String, false, pAct, true);
 }
 
 CHiSeq2x00XY::~CHiSeq2x00XY()
@@ -81,6 +84,23 @@ int CHiSeq2x00XY::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct) {
 		}
 
 		pProp->Get(port_);
+	}
+	return DEVICE_OK;
+}
+
+int CHiSeq2x00XY::OnPort2(MM::PropertyBase* pProp, MM::ActionType eAct) {
+	if (eAct == MM::BeforeGet) {
+		pProp->Set(port2_.c_str());
+	}
+	else if (eAct == MM::AfterSet) {
+		if (initialized_)
+		{
+			// revert
+			pProp->Set(port2_.c_str());
+			return DEVICE_ERR;
+		}
+
+		pProp->Get(port2_);
 	}
 	return DEVICE_OK;
 }

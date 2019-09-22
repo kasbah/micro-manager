@@ -101,10 +101,12 @@ public:
 
 
 	int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnPort2(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
 	double pos_um_;
 	std::string port_;
+	std::string port2_;
 	bool initialized_;
 
 };
