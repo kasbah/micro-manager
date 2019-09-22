@@ -47,10 +47,10 @@ public:
 	void GetName(char* name) const;
 	bool Busy();
 
-	int SetPositionUm(double x, double y) { 
+	int SetPositionUmY(double pos) { 
 		std::ostringstream command;
 		std::string throw_away;
-		command << "1D" << int(y * 100);
+		command << "1D" << int(pos * 100);
 		int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
 		if (ret != DEVICE_OK) {
 			return ret;
@@ -73,26 +73,63 @@ public:
 		return DEVICE_OK; 
 	
 	};
-	//int GetPositionUm(double& pos) { 
-	//	std::string answer;
-	//	std::string throw_away;
-	//	
-	//	int ret = SendSerialCommand(port_.c_str(), "1D", "\r");
-	//	if (ret != DEVICE_OK) {
-	//		return ret;
-	//	}
-	//	ret = GetSerialAnswer(port_.c_str(), "\r\n", throw_away);
-	//	ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+	int SetPositionUmX(double pos) {
+		std::ostringstream command;
+		std::string throw_away;
+		command << "MA " << int(pos * 100);
+		int ret = SendSerialCommand(port2_.c_str(), command.str().c_str(), "\r");
+		if (ret != DEVICE_OK) {
+			return ret;
+		}
+		ret = GetSerialAnswer(port2_.c_str(), "\r\n", throw_away);
+		if (ret != DEVICE_OK) {
+			return ret;
+		}
+		return DEVICE_OK;
 
-	//	if (ret != DEVICE_OK) {
-	//		return ret;
-	//	}
-	//	
-	//	// answer is in the form: "*-3000" so we ignore the "*" and convert to float
-	//	pos = atof(answer.erase(0, 1).c_str()) / 100;
+	}
+	int GetPositionUmY(double& pos) { 
+		std::string answer;
+		std::string throw_away;
+		
+		int ret = SendSerialCommand(port_.c_str(), "1D", "\r");
+		if (ret != DEVICE_OK) {
+			return ret;
+		}
+		ret = GetSerialAnswer(port_.c_str(), "\r\n", throw_away);
+		ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
 
-	//	return DEVICE_OK; 
-	//};
+		if (ret != DEVICE_OK) {
+			return ret;
+		}
+		
+		// answer is in the form: "*-3000" so we ignore the "*" and convert to float
+		pos = atof(answer.erase(0, 1).c_str()) / 100;
+
+		return DEVICE_OK; 
+	};
+	int GetPositionUmX(double& pos) {
+		std::string answer;
+		std::string throw_away;
+
+		int ret = SendSerialCommand(port2_.c_str(), "PR P", "\r");
+		if (ret != DEVICE_OK) {
+			return ret;
+		}
+		ret = GetSerialAnswer(port2_.c_str(), "\r\n", throw_away);
+		if (ret != DEVICE_OK) {
+			return ret;
+		}
+		ret = GetSerialAnswer(port2_.c_str(), "\r\n", answer);
+
+		if (ret != DEVICE_OK) {
+			return ret;
+		}
+
+		pos = atof(answer.c_str()) / 100;
+
+		return DEVICE_OK;
+	}
 	//int SetOrigin() { return DEVICE_OK; };
 	//int GetLimits(double& min, double& max) { return DEVICE_OK; };
 	//double GetStepSize() { return 0; }
@@ -105,7 +142,11 @@ public:
 // -----------
 	int SetPositionSteps(long x, long y)
 	{
-		return DEVICE_OK;
+		int ret = SetPositionUmX(x);
+		if (ret != DEVICE_OK) {
+			return ret;
+		}
+		return SetPositionUmY(y);
 	}
 	//int SetRelativePositionSteps(long x, long y)
 	//{
@@ -113,6 +154,17 @@ public:
 	//}
 	int GetPositionSteps(long& x, long& y)
 	{
+		double posX;
+		double posY;
+		GetPositionUmX(posX);
+		GetPositionUmY(posY);
+		char msg[64];
+		sprintf(msg, "X: %f", posX);
+		LogMessage(msg);
+		sprintf(msg, "Y: %f", posY);
+		LogMessage(msg);
+		x = long(posX);
+		y = long(posY);
 		return DEVICE_OK;
 	}
 	int Home()
@@ -135,8 +187,8 @@ public:
 	{
 		return DEVICE_UNSUPPORTED_COMMAND;
 	}
-	double GetStepSizeXUm() { return stepSizeXUm_; }
-	double GetStepSizeYUm() { return stepSizeYUm_; }
+	double GetStepSizeXUm() { return 1; }
+	double GetStepSizeYUm() { return 1; }
 	int IsXYStageSequenceable(bool& isSequenceable) const { isSequenceable = false; return DEVICE_OK; }
 
 
