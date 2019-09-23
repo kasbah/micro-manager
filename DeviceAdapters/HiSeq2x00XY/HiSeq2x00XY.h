@@ -50,7 +50,7 @@ public:
 	int SetPositionUmY(double pos) { 
 		std::ostringstream command;
 		std::string throw_away;
-		command << "1D" << int(pos * 100);
+		command << "1D" << -int(pos * 100);
 		int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
 		if (ret != DEVICE_OK) {
 			return ret;
@@ -76,7 +76,7 @@ public:
 	int SetPositionUmX(double pos) {
 		std::ostringstream command;
 		std::string throw_away;
-		command << "MA " << int(pos * 100);
+		command << "MA " << -int(pos);
 		int ret = SendSerialCommand(port2_.c_str(), command.str().c_str(), "\r");
 		if (ret != DEVICE_OK) {
 			return ret;
@@ -104,7 +104,7 @@ public:
 		}
 		
 		// answer is in the form: "*-3000" so we ignore the "*" and convert to float
-		pos = atof(answer.erase(0, 1).c_str()) / 100;
+		pos = -atof(answer.erase(0, 1).c_str()) / 100;
 
 		return DEVICE_OK; 
 	};
@@ -126,7 +126,7 @@ public:
 			return ret;
 		}
 
-		pos = atof(answer.c_str()) / 100;
+		pos = -atof(answer.c_str());
 
 		return DEVICE_OK;
 	}
