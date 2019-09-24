@@ -47,10 +47,10 @@ public:
 	void GetName(char* name) const;
 	bool Busy();
 
-	int SetPositionUmY(double pos) { 
+	int SetPositionStepsY(long pos) { 
 		std::ostringstream command;
 		std::string throw_away;
-		command << "1D" << -int(pos * 100);
+		command << "1D" << -pos;
 		int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
 		if (ret != DEVICE_OK) {
 			return ret;
@@ -88,7 +88,7 @@ public:
 		return DEVICE_OK;
 
 	}
-	int GetPositionUmY(double& pos) { 
+	int GetPositionStepsY(long& pos) { 
 		std::string answer;
 		std::string throw_away;
 		
@@ -103,8 +103,8 @@ public:
 			return ret;
 		}
 		
-		// answer is in the form: "*-3000" so we ignore the "*" and convert to float
-		pos = -atof(answer.erase(0, 1).c_str()) / 100;
+		// answer is in the form: "*-3000" so we ignore the "*" and convert to int
+		pos = -atoi(answer.erase(0, 1).c_str());
 
 		return DEVICE_OK; 
 	};
@@ -126,7 +126,7 @@ public:
 			return ret;
 		}
 
-		pos = -atof(answer.c_str());
+		pos = -atoi(answer.c_str());
 
 		return DEVICE_OK;
 	}
@@ -146,21 +146,15 @@ public:
 		if (ret != DEVICE_OK) {
 			return ret;
 		}
-		return SetPositionUmY(y);
+		return SetPositionStepsY(y);
 	}
-	//int SetRelativePositionSteps(long x, long y)
-	//{
-	//	return DEVICE_OK;
-	//}
 	int GetPositionSteps(long& x, long& y)
 	{
-	
-		double posY;
-		GetPositionStepsX(x);
-		GetPositionUmY(posY);
-		char msg[64];
-		y = long(posY);
-		return DEVICE_OK;
+		int ret = GetPositionStepsX(x);
+		if (ret != DEVICE_OK) {
+			return ret;
+		}
+		return GetPositionStepsY(y);
 	}
 	int Home()
 	{
@@ -196,7 +190,7 @@ private:
 	std::string port2_;
 	bool initialized_;
 	double stepSizeXUm_ = 2.44;
-	double stepSizeYUm_ = 1;
+	double stepSizeYUm_ = 0.01;
 
 };
 
