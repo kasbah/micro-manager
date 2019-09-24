@@ -130,13 +130,6 @@ public:
 
 		return DEVICE_OK;
 	}
-	//int SetOrigin() { return DEVICE_OK; };
-	//int GetLimits(double& min, double& max) { return DEVICE_OK; };
-	//double GetStepSize() { return 0; }
-	//int SetPositionSteps(long steps) { return DEVICE_OK; };
-	//int GetPositionSteps(long& steps) { return DEVICE_OK; };
-	//int IsStageSequenceable(bool& isSequenceable) const { isSequenceable = false; return DEVICE_OK; }
-	//bool IsContinuousFocusDrive(void) const { return false; };
 
 	// XYStage API
 // -----------
@@ -170,11 +163,21 @@ public:
 	}
 	int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax)
 	{
-		return DEVICE_UNSUPPORTED_COMMAND;
+		long x_min, x_max, y_min, y_max;
+		GetStepLimits(x_min, x_max, y_min, y_max);
+		xMin = double(x_min) * stepSizeXUm_;
+		xMax = double(x_max) * stepSizeXUm_;
+		yMin = double(y_min) * stepSizeYUm_;
+		yMax = double(y_max) * stepSizeYUm_;
+		return DEVICE_OK;
 	}
 	int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax)
 	{
-		return DEVICE_UNSUPPORTED_COMMAND;
+		xMin = -30000;
+		xMax = 20000;
+		yMin = -6700000;
+		yMax = 6700000;
+		return DEVICE_OK;
 	}
 	double GetStepSizeXUm() { return stepSizeXUm_; }
 	double GetStepSizeYUm() { return stepSizeYUm_; }
