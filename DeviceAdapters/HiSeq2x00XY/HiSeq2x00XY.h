@@ -73,10 +73,10 @@ public:
 		return DEVICE_OK; 
 	
 	};
-	int SetPositionUmX(double pos) {
+	int SetPositionStepsX(long pos) {
 		std::ostringstream command;
 		std::string throw_away;
-		command << "MA " << -int(pos);
+		command << "MA " << -pos;
 		int ret = SendSerialCommand(port2_.c_str(), command.str().c_str(), "\r");
 		if (ret != DEVICE_OK) {
 			return ret;
@@ -108,7 +108,7 @@ public:
 
 		return DEVICE_OK; 
 	};
-	int GetPositionUmX(double& pos) {
+	int GetPositionStepsX(long& pos) {
 		std::string answer;
 		std::string throw_away;
 
@@ -142,7 +142,7 @@ public:
 // -----------
 	int SetPositionSteps(long x, long y)
 	{
-		int ret = SetPositionUmX(x);
+		int ret = SetPositionStepsX(x);
 		if (ret != DEVICE_OK) {
 			return ret;
 		}
@@ -154,16 +154,11 @@ public:
 	//}
 	int GetPositionSteps(long& x, long& y)
 	{
-		double posX;
+	
 		double posY;
-		GetPositionUmX(posX);
+		GetPositionStepsX(x);
 		GetPositionUmY(posY);
 		char msg[64];
-		sprintf(msg, "X: %f", posX);
-		LogMessage(msg);
-		sprintf(msg, "Y: %f", posY);
-		LogMessage(msg);
-		x = long(posX);
 		y = long(posY);
 		return DEVICE_OK;
 	}
@@ -187,8 +182,8 @@ public:
 	{
 		return DEVICE_UNSUPPORTED_COMMAND;
 	}
-	double GetStepSizeXUm() { return 1; }
-	double GetStepSizeYUm() { return 1; }
+	double GetStepSizeXUm() { return stepSizeXUm_; }
+	double GetStepSizeYUm() { return stepSizeYUm_; }
 	int IsXYStageSequenceable(bool& isSequenceable) const { isSequenceable = false; return DEVICE_OK; }
 
 
@@ -200,8 +195,8 @@ private:
 	std::string port_;
 	std::string port2_;
 	bool initialized_;
-	double stepSizeXUm_;
-	double stepSizeYUm_;
+	double stepSizeXUm_ = 2.44;
+	double stepSizeYUm_ = 1;
 
 };
 
